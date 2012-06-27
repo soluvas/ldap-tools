@@ -73,7 +73,8 @@ public class VCard2EntryConverter {
 				
 //				DefaultEntry entry = new DefaultEntry(schemaManager);
 				DefaultEntry entry = new DefaultEntry(dn);
-				entry.add("objectClass", "organizationalPerson", "uidObject", "extensibleObject", "socialPerson", "facebookObject");
+				entry.add("objectClass", "organizationalPerson", "uidObject", "extensibleObject", "socialPerson", "facebookObject",
+						"simpleSecurityObject");
 				entry.add("cn", formattedName);
 				entry.add("givenName", givenName);
 				entry.add("sn", familyName);
