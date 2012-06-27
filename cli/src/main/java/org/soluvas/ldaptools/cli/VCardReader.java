@@ -27,7 +27,7 @@ import com.google.common.collect.Lists;
 public class VCardReader {
 	
 	private transient Logger log = LoggerFactory.getLogger(VCardReader.class);
-//	private VCardEngine vCardEngine = new VCardEngine();
+	private VCardEngine vCardEngine = new VCardEngine();
 	@Inject private ActorSystem actorSystem;
 	
 	public Future<VCard> read(final File inputVcard) {
@@ -35,7 +35,7 @@ public class VCardReader {
 			@Override
 			public VCard call() throws Exception {
 				log.debug("Reading vCard file {}", inputVcard);
-				return new VCardEngine().parse(inputVcard);
+				return vCardEngine.parse(inputVcard);
 			}
 		}, actorSystem.dispatcher());
 	}
