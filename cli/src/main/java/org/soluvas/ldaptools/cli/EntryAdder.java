@@ -88,7 +88,8 @@ public class EntryAdder {
 					} catch (LdapEntryAlreadyExistsException e) {
 						// ignore if already exists, assume UID is correct
 						log.error("Duplicate LDAP entry " + entry.getDn(), e);
-						// FIXME: Utilize SlugUtils to generate alternative UID
+//						throw new RuntimeException("Duplicate LDAP entry " + entry.getDn(), e);
+						// FIXME: Utilize SlugUtils to generate alternative UID then retry
 						return entry;
 					}
 				}

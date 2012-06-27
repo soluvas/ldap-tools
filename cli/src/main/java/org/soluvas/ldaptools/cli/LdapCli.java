@@ -15,7 +15,9 @@ import javax.inject.Named;
 import net.sourceforge.cardme.vcard.VCard;
 import net.sourceforge.cardme.vcard.features.PhotoFeature;
 
+import org.apache.directory.ldap.client.api.LdapConnection;
 import org.apache.directory.shared.ldap.model.entry.Entry;
+import org.apache.directory.shared.ldap.model.exception.LdapException;
 import org.jboss.weld.environment.se.bindings.Parameters;
 import org.jboss.weld.environment.se.events.ContainerInitialized;
 import org.slf4j.Logger;
@@ -31,6 +33,7 @@ import akka.dispatch.Mapper;
 import akka.util.Duration;
 
 import com.google.common.base.Function;
+import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
@@ -53,6 +56,8 @@ public class LdapCli {
 	@Named("personImageStore") ImageStore personImageStore;
 	@Inject 
 	PersonClear personClear;
+	@Inject @Named("ldapUsersDn") private String ldapUsersDn;
+	@Inject LdapConnection ldap;
 	
 	public void run(@Observes ContainerInitialized e) {
 		log.info("ldap-cli starting");
@@ -131,6 +136,24 @@ public class LdapCli {
 										@Override
 										public Entry apply(Entry entry) {
 											try {
+												// Generate a new, "valid" UID
+												// TODO: This is not always safe because in reality, several threads or even different processes
+												// can insert entries at the same time
+//												String personId = SlugUtils.generateValidId(entry.get("cn").getString(), new Predicate<String>() {
+//													@Override
+//													public boolean apply(String id) {
+//														synchronized (ldap) {
+//															try {
+//																return !ldap.exists("uid=" + id + "," + ldapUsersDn);
+//															} catch (LdapException e) {
+//																throw new RuntimeException("Cannot check LDAP entry", e);
+//															}
+//														}
+//													}
+//												});
+//												entry.setDn("uid=" + personId + "," + ldapUsersDn);
+												String personId = entry.getDn().getRdn().getValue().getString();
+												
 												if (vCard.hasPhotos()) {
 													String name = vCard.getFormattedName().getFormattedName();
 													log.debug("Reading photo for {} {} from vCard", name, entry.getDn());
@@ -138,7 +161,6 @@ public class LdapCli {
 													final byte[] photoBytes = photo.getPhoto();
 													ByteArrayInputStream photoStream = new ByteArrayInputStream(photoBytes);
 													log.info("Read {} bytes photo for {} {}", new Object[] { photoBytes.length, name, entry.getDn() });
-													String personId = SlugUtils.generateId(name, 0);
 													try {
 														final String photoId = personImageStore.create(personId + ".jpg", photoStream, "image/jpeg", photoBytes.length,
 																name);
