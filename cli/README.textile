@@ -2,28 +2,27 @@ h1. LDAP Command Line Interface (CLI)
 
 h2. Build Dependencies
 
-* "CardMe vCard library":http://sourceforge.net/projects/cardme/. @net.sf.cardme:cardme:0.3.4.01@ (deployed to Soluvas.org thirdparty repository) 
+* "CardMe vCard library":http://sourceforge.net/projects/cardme/. @net.sourceforge.cardme:cardme:0.3.4.01@ (deployed to Soluvas.org thirdparty repository) 
 
 Internal note: To deploy CardMe artifacts to Soluvas.org Thirdparty repository:
 
 bc.. mvn deploy:deploy-file -f ~/git/webdav-deployer/pom.xml \
   -Durl=dav:http://maven.soluvas.org/thirdparty \
   -Dfile=/together/Technology/Enterprise_Integration/vCard/cardme-0.3.4.01.jar \
-  -DgroupId=net.sf.cardme -DartifactId=cardme -Dversion=0.3.4.01 \
+  -DgroupId=net.sourceforge.cardme -DartifactId=cardme -Dversion=0.3.4.01 \
   -DrepositoryId=soluvas.org.thirdparty -Dpackaging=jar -DgeneratePom=true
 
 mvn deploy:deploy-file -f ~/git/webdav-deployer/pom.xml \
   -Durl=dav:http://maven.soluvas.org/thirdparty \
   -Dfile=/together/Technology/Enterprise_Integration/vCard/cardme-0.3.4.01-javadoc.jar \
-  -DgroupId=net.sf.cardme -DartifactId=cardme -Dversion=0.3.4.01 -Dclassifier=javadoc \
+  -DgroupId=net.sourceforge.cardme -DartifactId=cardme -Dversion=0.3.4.01 -Dclassifier=javadoc \
   -DrepositoryId=soluvas.org.thirdparty -Dpackaging=jar -DgeneratePom=true
 
 mvn deploy:deploy-file -f ~/git/webdav-deployer/pom.xml \
   -Durl=dav:http://maven.soluvas.org/thirdparty \
   -Dfile=/together/Technology/Enterprise_Integration/vCard/cardme-src-0.3.4.01.jar \
-  -DgroupId=net.sf.cardme -DartifactId=cardme -Dversion=0.3.4.01 -Dclassifier=sources \
+  -DgroupId=net.sourceforge.cardme -DartifactId=cardme -Dversion=0.3.4.01 -Dclassifier=sources \
   -DrepositoryId=soluvas.org.thirdparty -Dpackaging=jar -DgeneratePom=true
-
 
 
 h2. Configuration
