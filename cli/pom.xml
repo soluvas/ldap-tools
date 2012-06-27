@@ -30,6 +30,17 @@
 		</dependency>
 
 		<dependency>
+			<groupId>org.apache.directory.shared</groupId>
+			<artifactId>shared-ldap-client-api</artifactId>
+			<version>1.0.0-M12</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.directory.shared</groupId>
+			<artifactId>shared-ldap-codec-standalone</artifactId>
+			<version>1.0.0-M12</version>
+		</dependency>
+		
+		<dependency>
 			<groupId>net.sourceforge.cardme</groupId>
 			<artifactId>cardme</artifactId>
 			<version>0.3.4.01</version>

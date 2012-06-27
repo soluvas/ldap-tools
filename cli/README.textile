@@ -35,6 +35,28 @@ h3. Image Server
 
 
 
+h2. Read vCard File(s)
+
+Just for testing.
+
+Syntax:
+
+bc. ./ldapcli.sh vcard-read FILE [FILE ...]
+
+Example:
+
+bc. ./ldapcli.sh import-vcard output/vcard/facebook_1225303239_santi_mutiara_sari.vcf output/vcard/facebook_1782503068_fitrya_murbarani.vcf
+
+h2. Convert vCard File(s) to LDIF
+
+Syntax:
+
+bc. ./ldapcli.sh vcard-to-ldif FILE [FILE ...]
+
+Example:
+
+bc. ./ldapcli.sh vcard-to-ldif output/vcard/facebook_1225303239_santi_mutiara_sari.vcf output/vcard/facebook_1782503068_fitrya_murbarani.vcf
+
 h2. Import from vCard (WITHOUT Photo) File(s)
 
 Syntax:
