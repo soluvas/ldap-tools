@@ -56,6 +56,9 @@ public class LdapCli {
 				});
 				List<VCard> vCards = Await.result(vCardReader.read(files), Duration.Inf());
 				log.info("Parsed {} vCards", vCards.size());
+				for (VCard card : vCards) {
+					log.info("{}", card);
+				}
 			}
 		} catch (Exception ex) {
 			log.error("Error executing command", ex);
