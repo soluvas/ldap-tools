@@ -75,7 +75,7 @@ public class VCard2EntryConverter {
 				DefaultEntry entry = new DefaultEntry(dn);
 				entry.add("objectClass", "organizationalPerson", "uidObject", "extensibleObject", "socialPerson", "facebookObject");
 				entry.add("cn", formattedName);
-				entry.add("gn", givenName);
+				entry.add("givenName", givenName);
 				entry.add("sn", familyName);
 				
 				for (EmailFeature email : Lists.newArrayList(vCard.getEmails()))
