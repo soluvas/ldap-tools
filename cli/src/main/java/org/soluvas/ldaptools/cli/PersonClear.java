@@ -1,5 +1,6 @@
 package org.soluvas.ldaptools.cli;
 
+import java.util.List;
 import java.util.concurrent.Callable;
 
 import javax.inject.Inject;
@@ -42,17 +43,17 @@ public class PersonClear {
 	}
 	
 	public Future<String> deleteRecursively(final Entry entry) {
-		return Futures.future(new Callable<EntryCursor>() {
+		return Futures.future(new Callable<List<Entry>>() {
 			@Override
-			public EntryCursor call() throws Exception {
+			public List<Entry> call() throws Exception {
 				log.debug("Preparing to delete {}, getting sub-entries...", entry.getDn());
 				EntryCursor cursor = ldap.search(entry.getDn(), "(objectClass=*)", SearchScope.SUBTREE, new String[] { });
-				return cursor;
+				return ImmutableList.copyOf(cursor);
 			}
-		}, actorSystem.dispatcher()).flatMap(new Mapper<EntryCursor, Future<Iterable<Void>>>() {
+		}, actorSystem.dispatcher()).flatMap(new Mapper<List<Entry>, Future<Iterable<Void>>>() {
 			@Override
-			public Future<Iterable<Void>> apply(EntryCursor cursor) {
-				return Futures.traverse(ImmutableList.copyOf(cursor), new Function<Entry, Future<Void>>() {
+			public Future<Iterable<Void>> apply(List<Entry> entries) {
+				return Futures.traverse(entries, new Function<Entry, Future<Void>>() {
 					@Override
 					public Future<Void> apply(final Entry subEntry) {
 						return Futures.future(new Callable<Void>() {
@@ -84,17 +85,17 @@ public class PersonClear {
 	}
 	
 	public Future<Iterable<String>> clear() {
-		return Futures.future(new Callable<EntryCursor>() {
+		return Futures.future(new Callable<List<Entry>>() {
 			@Override
-			public EntryCursor call() throws Exception {
+			public List<Entry> call() throws Exception {
 				EntryCursor cursor = ldap.search(ldapUsersDn, "(objectClass=person)", SearchScope.ONELEVEL, "uid", "cn");
-				return cursor;
+				return ImmutableList.copyOf(cursor);
 			}
 		}, actorSystem.dispatcher())
-		.flatMap(new Mapper<EntryCursor, Future<Iterable<String>>>() {
+		.flatMap(new Mapper<List<Entry>, Future<Iterable<String>>>() {
 			@Override
-			public Future<Iterable<String>> apply(EntryCursor cursor) {
-				return Futures.traverse(cursor, new Function<Entry, Future<String>>() {
+			public Future<Iterable<String>> apply(List<Entry> entries) {
+				return Futures.traverse(entries, new Function<Entry, Future<String>>() {
 					@Override
 					public Future<String> apply(Entry entry) {
 						return deleteRecursively(entry);
