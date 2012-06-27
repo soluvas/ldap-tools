@@ -9,7 +9,7 @@
 	<packaging>pom</packaging>
 
 	<modules>
-		<module>ldapcli</module>
+		<module>cli</module>
 	</modules>
 
 </project>

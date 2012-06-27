@@ -1,0 +1,58 @@
+h1. LDAP Command Line Interface (CLI)
+
+h2. Build Dependencies
+
+* "CardMe vCard library":http://sourceforge.net/projects/cardme/. @net.sf.cardme:cardme:0.3.4.01@ (deployed to Soluvas.org thirdparty repository) 
+
+Internal note: To deploy CardMe artifacts to Soluvas.org Thirdparty repository:
+
+bc.. mvn deploy:deploy-file -f ~/git/webdav-deployer/pom.xml \
+  -Durl=dav:http://maven.soluvas.org/thirdparty \
+  -Dfile=/together/Technology/Enterprise_Integration/vCard/cardme-0.3.4.01.jar \
+  -DgroupId=net.sf.cardme -DartifactId=cardme -Dversion=0.3.4.01 \
+  -DrepositoryId=soluvas.org.thirdparty -Dpackaging=jar -DgeneratePom=true
+
+mvn deploy:deploy-file -f ~/git/webdav-deployer/pom.xml \
+  -Durl=dav:http://maven.soluvas.org/thirdparty \
+  -Dfile=/together/Technology/Enterprise_Integration/vCard/cardme-0.3.4.01-javadoc.jar \
+  -DgroupId=net.sf.cardme -DartifactId=cardme -Dversion=0.3.4.01 -Dclassifier=javadoc \
+  -DrepositoryId=soluvas.org.thirdparty -Dpackaging=jar -DgeneratePom=true
+
+mvn deploy:deploy-file -f ~/git/webdav-deployer/pom.xml \
+  -Durl=dav:http://maven.soluvas.org/thirdparty \
+  -Dfile=/together/Technology/Enterprise_Integration/vCard/cardme-src-0.3.4.01.jar \
+  -DgroupId=net.sf.cardme -DartifactId=cardme -Dversion=0.3.4.01 -Dclassifier=sources \
+  -DrepositoryId=soluvas.org.thirdparty -Dpackaging=jar -DgeneratePom=true
+
+
+
+h2. Configuration
+
+h3. LDAP Server
+
+
+
+h3. Image Server
+
+
+
+h2. Import from vCard (WITHOUT Photo) File(s)
+
+Syntax:
+
+bc. ./ldapcli.sh import-vcard USERS_DN FILE [FILE ...]
+
+Example:
+
+bc. ./ldapcli.sh import-vcard ou=users,dc=berbatik,dc=com output/vcard/facebook_1225303239_santi_mutiara_sari.vcf output/vcard/facebook_1782503068_fitrya_murbarani.vcf
+
+h2. Import from vCard (WITH Photo) File(s)
+
+Syntax:
+
+bc. ./ldapcli.sh import-vcardphoto USERS_DN FILE [FILE ...]
+
+Example:
+
+bc. ./ldapcli.sh import-vcardphoto ou=users,dc=berbatik,dc=com output/vcard/facebook_1225303239_santi_mutiara_sari.vcf output/vcard/facebook_1782503068_fitrya_murbarani.vcf
+
