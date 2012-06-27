@@ -100,18 +100,16 @@ public class VCard2EntryConverter {
 
 				entry.add("virtualMail", personId + "@member.berbatik.com");
 
-				if (vCard.containsExtendedType(new ExtendedType("X-FACEBOOK-ID", null)) || vCard.containsExtendedType(new ExtendedType("X-FACEBOOK-USERNAME", null))) {
-					List<ExtendedFeature> extendedTypes = ImmutableList.copyOf(vCard.getExtendedTypes());
-					for (ExtendedFeature ext : extendedTypes) {
-						if ("X-FACEBOOK-ID".equals(ext.getExtensionName())) {
-							entry.add("facebookId", ext.getExtensionData());
-						}
-						if ("X-FACEBOOK-USERNAME".equals(ext.getExtensionName())) {
-							entry.add("facebookUsername", ext.getExtensionData());
-						}
-						// TODO: X-GENDER:Female
-						// TODO: BDAY
+				List<ExtendedFeature> extendedTypes = ImmutableList.copyOf(vCard.getExtendedTypes());
+				for (ExtendedFeature ext : extendedTypes) {
+					if ("X-FACEBOOK-ID".equals(ext.getExtensionName())) {
+						entry.add("facebookId", ext.getExtensionData());
 					}
+					if ("X-FACEBOOK-USERNAME".equals(ext.getExtensionName())) {
+						entry.add("facebookUsername", ext.getExtensionData());
+					}
+					// TODO: X-GENDER:Female
+					// TODO: BDAY
 				}
 				
 //				NICKNAME:shansaiichan
