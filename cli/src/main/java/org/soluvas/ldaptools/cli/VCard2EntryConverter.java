@@ -86,6 +86,7 @@ public class VCard2EntryConverter {
 					if (Strings.isNotEmpty(nickname))
 						entry.add("uniqueIdentifier", nickname);
 				}
+				
 				if (vCard.hasAddresses()) {
 					AddressFeature address = vCard.getAddresses().next();
 					if (address.hasStreetAddress() && Strings.isNotEmpty(address.getStreetAddress()))
