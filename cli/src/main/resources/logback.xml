@@ -25,5 +25,7 @@
   <logger name="org.apache.axis2.transport.http" level="INFO" />
   <logger name="org.apache.commons" level="INFO"/>
   <logger name="org.apache.directory" level="INFO"/>
+  <logger name="org.apache.directory.shared.asn1.ber.Asn1Decoder" level="ERROR"/>
+  <logger name="org.apache.http" level="INFO"/>
   <logger name="org.apache.http.wire" level="INFO"/>
 </configuration>

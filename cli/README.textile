@@ -80,3 +80,8 @@ Example:
 
 bc. ./ldapcli.sh import-vcardphoto output/vcard/facebook_1225303239_santi_mutiara_sari.vcf output/vcard/facebook_1782503068_fitrya_murbarani.vcf
 
+h2. Clear All Person (WARNING: DANGEROUS!)
+
+Delete all @objectClass=person@ entries inside the Users DN specified in @ldap-cli.properties@. 
+
+bc. ./ldapcli.sh person-clear

@@ -51,6 +51,7 @@ public class LdapCli {
 	@Inject VCard2EntryConverter vCard2EntryConverter;
 	@Inject EntryAdder entryAdder;
 	@Inject ImageStore personImageStore;
+	@Inject PersonClear personClear;
 	
 	@PostConstruct public void init() {
 		mapper = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
@@ -164,6 +165,12 @@ public class LdapCli {
 				}, actorSystem.dispatcher());
 				List<Entry> entries = ImmutableList.copyOf( Await.result(entryIterFuture, Duration.Inf()) );
 				log.info("Added {} LDAP entries with photos", entries.size());
+			} else if ("person-clear".equals(args[0])) {
+				// Delete all person
+				Future<Iterable<String>> clearFuture = personClear.clear();
+				Iterable<String> clearedIter = Await.result(clearFuture, Duration.Inf());
+				ImmutableList<String> cleareds = ImmutableList.copyOf(clearedIter);
+				log.info("Deleted {} entries: {}", cleareds.size(), cleareds);
 			}
 		} catch (Exception ex) {
 			log.error("Error executing command", ex);

@@ -1,0 +1,107 @@
+package org.soluvas.ldaptools.cli;
+
+import java.util.concurrent.Callable;
+
+import javax.inject.Inject;
+import javax.inject.Named;
+
+import org.apache.directory.ldap.client.api.LdapConnection;
+import org.apache.directory.shared.ldap.model.cursor.EntryCursor;
+import org.apache.directory.shared.ldap.model.entry.Entry;
+import org.apache.directory.shared.ldap.model.message.SearchScope;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import akka.actor.ActorSystem;
+import akka.dispatch.Future;
+import akka.dispatch.Futures;
+import akka.dispatch.Mapper;
+import akka.japi.Function;
+
+import com.google.common.collect.ImmutableList;
+
+/**
+ * Deletes all {@link Entry}es under a DN in an LDAP Repository, recursively.
+ * @author ceefour
+ */
+public class PersonClear {
+	
+	private transient Logger log = LoggerFactory.getLogger(PersonClear.class);
+	@Inject private ActorSystem actorSystem;
+	@Inject private LdapConnection ldap;
+	@Inject @Named("ldapUsersDn") private String ldapUsersDn;
+	
+	public PersonClear() {
+		super();
+	}
+	
+	public PersonClear(ActorSystem actorSystem, LdapConnection ldap) {
+		super();
+		this.actorSystem = actorSystem;
+		this.ldap = ldap;
+	}
+	
+	public Future<String> deleteRecursively(final Entry entry) {
+		return Futures.future(new Callable<EntryCursor>() {
+			@Override
+			public EntryCursor call() throws Exception {
+				log.debug("Preparing to delete {}, getting sub-entries...", entry.getDn());
+				EntryCursor cursor = ldap.search(entry.getDn(), "(objectClass=*)", SearchScope.SUBTREE, new String[] { });
+				return cursor;
+			}
+		}, actorSystem.dispatcher()).flatMap(new Mapper<EntryCursor, Future<Iterable<Void>>>() {
+			@Override
+			public Future<Iterable<Void>> apply(EntryCursor cursor) {
+				return Futures.traverse(ImmutableList.copyOf(cursor), new Function<Entry, Future<Void>>() {
+					@Override
+					public Future<Void> apply(final Entry subEntry) {
+						return Futures.future(new Callable<Void>() {
+							@Override
+							public Void call() throws Exception {
+								log.info("Deleting sub-entry of {} : {}", entry.getDn(), subEntry.getDn());
+								synchronized (ldap) {
+									ldap.delete(subEntry.getDn());
+								}
+								return null;
+							}
+						}, actorSystem.dispatcher());
+					}
+				}, actorSystem.dispatcher());
+			}
+		}).flatMap(new Mapper<Iterable<Void>, Future<String>>() {
+			@Override
+			public Future<String> apply(Iterable<Void> arg0) {
+				return Futures.future(new Callable<String>() {
+					@Override
+					public String call() throws Exception {
+						log.info("Deleting {}", entry.getDn());
+						ldap.delete(entry.getDn());
+						return entry.getDn().getName();
+					}
+				}, actorSystem.dispatcher());
+			}
+		});
+	}
+	
+	public Future<Iterable<String>> clear() {
+		return Futures.future(new Callable<EntryCursor>() {
+			@Override
+			public EntryCursor call() throws Exception {
+				EntryCursor cursor = ldap.search(ldapUsersDn, "(objectClass=person)", SearchScope.ONELEVEL, "uid", "cn");
+				return cursor;
+			}
+		}, actorSystem.dispatcher())
+		.flatMap(new Mapper<EntryCursor, Future<Iterable<String>>>() {
+			@Override
+			public Future<Iterable<String>> apply(EntryCursor cursor) {
+				return Futures.traverse(cursor, new Function<Entry, Future<String>>() {
+					@Override
+					public Future<String> apply(Entry entry) {
+						return deleteRecursively(entry);
+					}
+				}, actorSystem.dispatcher());
+			}
+		});
+	}
+
+}
