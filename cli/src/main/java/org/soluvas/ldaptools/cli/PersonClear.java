@@ -47,8 +47,10 @@ public class PersonClear {
 			@Override
 			public List<Entry> call() throws Exception {
 				log.debug("Preparing to delete {}, getting sub-entries...", entry.getDn());
-				EntryCursor cursor = ldap.search(entry.getDn(), "(objectClass=*)", SearchScope.SUBTREE, new String[] { });
-				return ImmutableList.copyOf(cursor);
+				synchronized (ldap) {
+					EntryCursor cursor = ldap.search(entry.getDn(), "(objectClass=*)", SearchScope.ONELEVEL, new String[] { });
+					return ImmutableList.copyOf(cursor);
+				}
 			}
 		}, actorSystem.dispatcher()).flatMap(new Mapper<List<Entry>, Future<Iterable<Void>>>() {
 			@Override
@@ -56,14 +58,13 @@ public class PersonClear {
 				return Futures.traverse(entries, new Function<Entry, Future<Void>>() {
 					@Override
 					public Future<Void> apply(final Entry subEntry) {
-						return Futures.future(new Callable<Void>() {
+						return deleteRecursively(subEntry)
+								.map(new Mapper<String, Void>() {
 							@Override
-							public Void call() throws Exception {
-								log.info("Deleting sub-entry of {} : {}", entry.getDn(), subEntry.getDn());
-//								ldap.delete(subEntry.getDn());
+							public Void apply(String arg0) {
 								return null;
 							}
-						}, actorSystem.dispatcher());
+						});
 					}
 				}, actorSystem.dispatcher());
 			}
@@ -74,7 +75,15 @@ public class PersonClear {
 					@Override
 					public String call() throws Exception {
 						log.info("Deleting {}", entry.getDn());
-//						ldap.delete(entry.getDn());
+						try {
+							synchronized (ldap) {
+								ldap.delete(entry.getDn());
+							}
+						} catch(Exception e) {
+							// log error
+							log.error("Cannot delete LDAP entry " + entry.getDn(), e);
+							// but continue as if nothing happened
+						}
 						return entry.getDn().getName();
 					}
 				}, actorSystem.dispatcher());
@@ -86,8 +95,10 @@ public class PersonClear {
 		return Futures.future(new Callable<List<Entry>>() {
 			@Override
 			public List<Entry> call() throws Exception {
-				EntryCursor cursor = ldap.search(ldapUsersDn, "(objectClass=person)", SearchScope.ONELEVEL, "uid", "cn");
-				return ImmutableList.copyOf(cursor);
+				synchronized (ldap) {
+					EntryCursor cursor = ldap.search(ldapUsersDn, "(objectClass=person)", SearchScope.ONELEVEL, "uid", "cn");
+					return ImmutableList.copyOf(cursor);
+				}
 			}
 		}, actorSystem.dispatcher())
 		.flatMap(new Mapper<List<Entry>, Future<Iterable<String>>>() {
