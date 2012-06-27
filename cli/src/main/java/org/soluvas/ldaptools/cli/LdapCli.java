@@ -139,22 +139,28 @@ public class LdapCli {
 													ByteArrayInputStream photoStream = new ByteArrayInputStream(photoBytes);
 													log.info("Read {} bytes photo for {} {}", new Object[] { photoBytes.length, name, entry.getDn() });
 													String personId = SlugUtils.generateId(name, 0);
-													final String photoId = personImageStore.create(personId + ".jpg", photoStream, "image/jpeg", photoBytes.length,
-															name);
-													log.info("Created photo {} for {}", photoId, entry.getDn());
-													entry.add("photoId", photoId);
+													try {
+														final String photoId = personImageStore.create(personId + ".jpg", photoStream, "image/jpeg", photoBytes.length,
+																name);
+														log.info("Created photo {} for {}", photoId, entry.getDn());
+														entry.add("photoId", photoId);
+													} catch (Exception ex) {
+														// cannot upload photo? perhaps broken file/format. log the error
+														log.error("Cannot upload photo for LDAP entry " + entry.getDn(), ex);
+														// and continue as if nothing happened
+													}
 												}
 												return entry;
-											} catch (Exception e) {
-												throw new RuntimeException("Cannot add photoId to LDAP entry " + entry.getDn(), e);
+											} catch (Exception ex) {
+												throw new RuntimeException("Cannot add photoId to LDAP entry " + entry.getDn(), ex);
 											}
 										}
 									});
 							}
 						}).flatMap(new Mapper<Entry, Future<Entry>>() {
 							@Override
-							public Future<Entry> apply(Entry input) {
-								Future<Entry> output = entryAdder.add(input);
+							public Future<Entry> apply(Entry entry) {
+								Future<Entry> output = entryAdder.add(entry);
 								return output;
 							}
 						});

@@ -28,4 +28,5 @@
   <logger name="org.apache.directory.shared.asn1.ber.Asn1Decoder" level="ERROR"/>
   <logger name="org.apache.http" level="INFO"/>
   <logger name="org.apache.http.wire" level="INFO"/>
+  <logger name="org.apache.mina" level="INFO"/>
 </configuration>
