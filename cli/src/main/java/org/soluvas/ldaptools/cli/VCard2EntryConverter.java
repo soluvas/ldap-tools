@@ -27,7 +27,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
 /**
- * Read vCard from File.
+ * Convert {@link VCard} objects to LDAP {@link Entry}.
  * @author ceefour
  */
 public class VCard2EntryConverter {

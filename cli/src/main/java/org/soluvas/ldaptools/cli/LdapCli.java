@@ -40,6 +40,7 @@ public class LdapCli {
 	
 	@Inject VCardReader vCardReader;
 	@Inject VCard2EntryConverter vCard2EntryConverter;
+	@Inject EntryAdder entryAdder;
 	
 	@PostConstruct public void init() {
 		mapper = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
@@ -84,6 +85,29 @@ public class LdapCli {
 				for (Entry entry : entries) {
 					System.out.println(entry);
 				}
+			} else if ("import-vcard".equals(args[0])) {
+				// Parse vCard files 
+				String[] fileNames = Arrays.copyOfRange(args, 1, args.length);
+				Future<Iterable<Entry>> entryIterFuture = Futures.traverse(Arrays.asList(fileNames), new akka.japi.Function<String, Future<Entry>>() {
+					@Override
+					public Future<Entry> apply(String input) {
+						return vCardReader.read(new File(input))
+								.flatMap(new Mapper<VCard, Future<Entry>>() {
+							@Override
+							public Future<Entry> apply(VCard vCard) {
+								return vCard2EntryConverter.asEntry(vCard);
+							}
+						}).flatMap(new Mapper<Entry, Future<Entry>>() {
+							@Override
+							public Future<Entry> apply(Entry input) {
+								Future<Entry> output = entryAdder.add(input);
+								return output;
+							}
+						});
+					}
+				}, actorSystem.dispatcher());
+				List<Entry> entries = ImmutableList.copyOf( Await.result(entryIterFuture, Duration.Inf()) );
+				log.info("Added {} LDAP entries", entries.size());
 			}
 		} catch (Exception ex) {
 			log.error("Error executing command", ex);

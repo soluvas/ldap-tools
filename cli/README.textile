@@ -61,19 +61,22 @@ h2. Import from vCard (WITHOUT Photo) File(s)
 
 Syntax:
 
-bc. ./ldapcli.sh import-vcard USERS_DN FILE [FILE ...]
+bc. ./ldapcli.sh import-vcard FILE [FILE ...]
 
 Example:
 
-bc. ./ldapcli.sh import-vcard ou=users,dc=berbatik,dc=com output/vcard/facebook_1225303239_santi_mutiara_sari.vcf output/vcard/facebook_1782503068_fitrya_murbarani.vcf
+bc. ./ldapcli.sh import-vcard output/vcard/facebook_1225303239_santi_mutiara_sari.vcf output/vcard/facebook_1782503068_fitrya_murbarani.vcf
 
 h2. Import from vCard (WITH Photo) File(s)
 
+Photos will be stored on a WebDAV repository complying to Soluvas Image Store structure.
+They will not be stored in a LDAP "photo" attribute.
+
 Syntax:
 
-bc. ./ldapcli.sh import-vcardphoto USERS_DN FILE [FILE ...]
+bc. ./ldapcli.sh import-vcardphoto FILE [FILE ...]
 
 Example:
 
-bc. ./ldapcli.sh import-vcardphoto ou=users,dc=berbatik,dc=com output/vcard/facebook_1225303239_santi_mutiara_sari.vcf output/vcard/facebook_1782503068_fitrya_murbarani.vcf
+bc. ./ldapcli.sh import-vcardphoto output/vcard/facebook_1225303239_santi_mutiara_sari.vcf output/vcard/facebook_1782503068_fitrya_murbarani.vcf
 
