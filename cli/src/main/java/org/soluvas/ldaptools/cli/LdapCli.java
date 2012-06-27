@@ -2,27 +2,26 @@ package org.soluvas.ldaptools.cli;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
-import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
+import javax.inject.Named;
 
 import net.sourceforge.cardme.vcard.VCard;
 import net.sourceforge.cardme.vcard.features.PhotoFeature;
 
 import org.apache.directory.shared.ldap.model.entry.Entry;
-import org.apache.directory.shared.ldap.model.exception.LdapException;
 import org.jboss.weld.environment.se.bindings.Parameters;
 import org.jboss.weld.environment.se.events.ContainerInitialized;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.soluvas.image.store.ImageStore;
 import org.soluvas.slug.SlugUtils;
-
-import scala.PartialFunction;
 
 import akka.actor.ActorSystem;
 import akka.dispatch.Await;
@@ -31,10 +30,7 @@ import akka.dispatch.Futures;
 import akka.dispatch.Mapper;
 import akka.util.Duration;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.common.base.Function;
-import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
@@ -44,18 +40,19 @@ import com.google.common.collect.Lists;
 public class LdapCli {
 	private transient Logger log = LoggerFactory.getLogger(LdapCli.class);
 	@Inject @Parameters String[] args;
-	@Inject ActorSystem actorSystem;
-	private ObjectMapper mapper;
+	@Inject 
+	ActorSystem actorSystem;
 	
-	@Inject VCardReader vCardReader;
-	@Inject VCard2EntryConverter vCard2EntryConverter;
-	@Inject EntryAdder entryAdder;
-	@Inject ImageStore personImageStore;
-	@Inject PersonClear personClear;
-	
-	@PostConstruct public void init() {
-		mapper = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
-	}
+	@Inject 
+	VCardReader vCardReader;
+	@Inject 
+	VCard2EntryConverter vCard2EntryConverter;
+	@Inject 
+	EntryAdder entryAdder;
+	@Inject 
+	@Named("personImageStore") ImageStore personImageStore;
+	@Inject 
+	PersonClear personClear;
 	
 	public void run(@Observes ContainerInitialized e) {
 		log.info("ldap-cli starting");
@@ -175,8 +172,17 @@ public class LdapCli {
 		} catch (Exception ex) {
 			log.error("Error executing command", ex);
 			throw new RuntimeException("Error executing command", ex);
-		} finally {
-			actorSystem.shutdown();
 		}
+	}
+	
+	@PreDestroy public void destroy() throws InterruptedException {
+		log.info("Bye byeeeeee");
+		Executors.newSingleThreadScheduledExecutor().schedule(new Runnable() { 
+			@Override
+			public void run() {
+				log.info("Exiting");
+				System.exit(0);
+			}
+		}, 50, TimeUnit.MILLISECONDS);
 	}
 }

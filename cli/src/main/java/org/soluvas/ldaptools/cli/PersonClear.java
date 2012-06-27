@@ -60,9 +60,7 @@ public class PersonClear {
 							@Override
 							public Void call() throws Exception {
 								log.info("Deleting sub-entry of {} : {}", entry.getDn(), subEntry.getDn());
-								synchronized (ldap) {
-									ldap.delete(subEntry.getDn());
-								}
+//								ldap.delete(subEntry.getDn());
 								return null;
 							}
 						}, actorSystem.dispatcher());
@@ -76,7 +74,7 @@ public class PersonClear {
 					@Override
 					public String call() throws Exception {
 						log.info("Deleting {}", entry.getDn());
-						ldap.delete(entry.getDn());
+//						ldap.delete(entry.getDn());
 						return entry.getDn().getName();
 					}
 				}, actorSystem.dispatcher());

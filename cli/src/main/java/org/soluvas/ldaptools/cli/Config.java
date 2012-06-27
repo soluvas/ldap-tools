@@ -1,6 +1,7 @@
 package org.soluvas.ldaptools.cli;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.Properties;
 
 import javax.annotation.PostConstruct;
@@ -10,7 +11,6 @@ import javax.enterprise.inject.Disposes;
 import javax.enterprise.inject.New;
 import javax.enterprise.inject.Produces;
 import javax.inject.Named;
-import javax.inject.Singleton;
 
 import org.apache.directory.ldap.client.api.LdapConnection;
 import org.apache.directory.ldap.client.api.LdapNetworkConnection;
@@ -30,10 +30,13 @@ import akka.actor.ActorSystem;
  * @author ceefour
  *
  */
+@SuppressWarnings("serial")
 @ApplicationScoped
-public class Config {
+public class Config implements Serializable {
 
 	private transient Logger log = LoggerFactory.getLogger(Config.class);
+	
+	@Produces private ActorSystem actorSystem;
 	@Produces private HttpClient httpClient;
 	@Produces private LdapConnection ldap;
 	@Produces private SchemaManager schemaManager;
@@ -41,6 +44,9 @@ public class Config {
 	private Properties props;
 	
 	@PostConstruct public void init() throws IOException {
+		log.info("Creating ActorSystem");
+		actorSystem = ActorSystem.create("ldap_cli");
+
 		props = new Properties();
 		props.load(getClass().getResourceAsStream("/ldap-cli.properties"));
 		
@@ -75,18 +81,16 @@ public class Config {
 		}
 		if (httpClient != null)
 			httpClient.getConnectionManager().shutdown();
-	}
-	
-	@Produces @Singleton ActorSystem createActorSystem() {
-		return ActorSystem.create("ldap_cli");
-	}
-	
-	public void destroyActorSystem(@Disposes @Singleton ActorSystem actorSystem) {
-		actorSystem = null;
+		
+		log.info("Shutting down ActorSystem");
 		actorSystem.shutdown();
+		actorSystem.awaitTermination();
+		actorSystem = null;
+		log.info("ActorSystem shut down");
 	}
 	
 	@Produces @ApplicationScoped /*@PersonRelated*/ @Named("personImageStore") public ImageStore createPersonImageStore(@New ImageStore imageStore) {
+		imageStore.setSystem(actorSystem);
 		imageStore.addStyle("thumbnail", "t", 50, 50);
 		imageStore.addStyle("small", "s", 128, 128);
 		imageStore.addStyle("normal", "n", 240, 320);
@@ -98,7 +102,7 @@ public class Config {
 		return imageStore;
 	}
 	
-	public void destroyPersonImageStore(@Disposes /*@PersonRelated*/ ImageStore imageStore) {
+	public void destroyPersonImageStore(@Disposes @Named("personImageStore") /*@PersonRelated*/ ImageStore imageStore) {
 		imageStore.destroy();
 	}
 	
