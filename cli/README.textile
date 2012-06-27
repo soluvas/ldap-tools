@@ -69,7 +69,7 @@ bc. ./ldapcli.sh import-vcard output/vcard/facebook_1225303239_santi_mutiara_sar
 
 h2. Import from vCard (WITH Photo) File(s)
 
-Photos will be stored on a WebDAV repository complying to Soluvas Image Store structure.
+Photos will be stored on a Soluvas Image Store structure (WebDAV repository + MongoDB).
 They will not be stored in a LDAP "photo" attribute.
 
 Syntax:

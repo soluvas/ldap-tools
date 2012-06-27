@@ -4,3 +4,13 @@ ldap.bind.port=10389
 ldap.bind.dn=uid=admin,ou=system
 ldap.bind.password=secret
 ldap.users.basedn=ou=users,dc=berbatik,dc=com
+
+# DAV URI should include username (if required) but NOT password
+image.dav.uri=http://dav.berbatik.annafi.dev/
+image.dav.password=
+# Do NOT include username and password in public URI! It can be CDN.
+image.public.uri=http://dav.berbatik.annafi.dev/
+# MongoDB URI should include username (if required) but NOT password
+# Collection name is always ${namespace}Image = personImage
+# If possible, Image MongoDB should be separate than data MongoDB
+image.mongo.uri=mongodb://127.0.0.1:27017/berbatik_image

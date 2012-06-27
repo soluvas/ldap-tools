@@ -100,6 +100,9 @@ public class VCard2EntryConverter {
 				}
 
 				entry.add("virtualMail", personId + "@member.berbatik.com");
+				
+				// TODO: configurable default password, or if it is omitted
+				entry.add("userPassword", "bippo");
 
 				List<ExtendedFeature> extendedTypes = ImmutableList.copyOf(vCard.getExtendedTypes());
 				for (ExtendedFeature ext : extendedTypes) {

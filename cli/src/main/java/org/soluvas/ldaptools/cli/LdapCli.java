@@ -1,6 +1,8 @@
 package org.soluvas.ldaptools.cli;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -9,12 +11,18 @@ import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 
 import net.sourceforge.cardme.vcard.VCard;
+import net.sourceforge.cardme.vcard.features.PhotoFeature;
 
 import org.apache.directory.shared.ldap.model.entry.Entry;
+import org.apache.directory.shared.ldap.model.exception.LdapException;
 import org.jboss.weld.environment.se.bindings.Parameters;
 import org.jboss.weld.environment.se.events.ContainerInitialized;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.soluvas.image.store.ImageStore;
+import org.soluvas.slug.SlugUtils;
+
+import scala.PartialFunction;
 
 import akka.actor.ActorSystem;
 import akka.dispatch.Await;
@@ -26,6 +34,7 @@ import akka.util.Duration;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.common.base.Function;
+import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
@@ -41,6 +50,7 @@ public class LdapCli {
 	@Inject VCardReader vCardReader;
 	@Inject VCard2EntryConverter vCard2EntryConverter;
 	@Inject EntryAdder entryAdder;
+	@Inject ImageStore personImageStore;
 	
 	@PostConstruct public void init() {
 		mapper = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
@@ -108,6 +118,52 @@ public class LdapCli {
 				}, actorSystem.dispatcher());
 				List<Entry> entries = ImmutableList.copyOf( Await.result(entryIterFuture, Duration.Inf()) );
 				log.info("Added {} LDAP entries", entries.size());
+			} else if ("import-vcardphoto".equals(args[0])) {
+				// Parse vCard files 
+				String[] fileNames = Arrays.copyOfRange(args, 1, args.length);
+				Future<Iterable<Entry>> entryIterFuture = Futures.traverse(Arrays.asList(fileNames), new akka.japi.Function<String, Future<Entry>>() {
+					@Override
+					public Future<Entry> apply(String input) {
+						return vCardReader.read(new File(input))
+								.flatMap(new Mapper<VCard, Future<Entry>>() {
+							@Override
+							public Future<Entry> apply(final VCard vCard) {
+								return vCard2EntryConverter.asEntry(vCard)
+										.map(new Mapper<Entry, Entry>() {
+										@Override
+										public Entry apply(Entry entry) {
+											try {
+												if (vCard.hasPhotos()) {
+													String name = vCard.getFormattedName().getFormattedName();
+													log.debug("Reading photo for {} {} from vCard", name, entry.getDn());
+													PhotoFeature photo = vCard.getPhotos().next();
+													final byte[] photoBytes = photo.getPhoto();
+													ByteArrayInputStream photoStream = new ByteArrayInputStream(photoBytes);
+													log.info("Read {} bytes photo for {} {}", new Object[] { photoBytes.length, name, entry.getDn() });
+													String personId = SlugUtils.generateId(name, 0);
+													final String photoId = personImageStore.create(personId + ".jpg", photoStream, "image/jpeg", photoBytes.length,
+															name);
+													log.info("Created photo {} for {}", photoId, entry.getDn());
+													entry.add("photoId", photoId);
+												}
+												return entry;
+											} catch (Exception e) {
+												throw new RuntimeException("Cannot add photoId to LDAP entry " + entry.getDn(), e);
+											}
+										}
+									});
+							}
+						}).flatMap(new Mapper<Entry, Future<Entry>>() {
+							@Override
+							public Future<Entry> apply(Entry input) {
+								Future<Entry> output = entryAdder.add(input);
+								return output;
+							}
+						});
+					}
+				}, actorSystem.dispatcher());
+				List<Entry> entries = ImmutableList.copyOf( Await.result(entryIterFuture, Duration.Inf()) );
+				log.info("Added {} LDAP entries with photos", entries.size());
 			}
 		} catch (Exception ex) {
 			log.error("Error executing command", ex);

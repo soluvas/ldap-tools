@@ -7,6 +7,7 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Disposes;
+import javax.enterprise.inject.New;
 import javax.enterprise.inject.Produces;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -21,6 +22,7 @@ import org.apache.http.impl.conn.PoolingClientConnectionManager;
 import org.apache.http.params.BasicHttpParams;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.soluvas.image.store.ImageStore;
 
 import akka.actor.ActorSystem;
 
@@ -36,9 +38,10 @@ public class Config {
 	@Produces private LdapConnection ldap;
 	@Produces private SchemaManager schemaManager;
 	@Produces @Named("ldapUsersDn") private String ldapUsersDn;
+	private Properties props;
 	
 	@PostConstruct public void init() throws IOException {
-		Properties props = new Properties();
+		props = new Properties();
 		props.load(getClass().getResourceAsStream("/ldap-cli.properties"));
 		
 		ldapUsersDn = props.getProperty("ldap.users.basedn");
@@ -58,15 +61,6 @@ public class Config {
 //		 HttpClient httpClient = new DecompressingHttpClient(new DefaultHttpClient(new PoolingClientConnectionManager(), new BasicHttpParams()));
 	}
 	
-	@Produces @Singleton ActorSystem createActorSystem() {
-		return ActorSystem.create("ldap_cli");
-	}
-	
-	public void destroyActorSystem(@Disposes @Singleton ActorSystem actorSystem) {
-		actorSystem = null;
-		actorSystem.shutdown();
-	}
-	
 	@PreDestroy public void destroy() {
 		if (schemaManager != null) {
 			schemaManager = null;
@@ -82,4 +76,30 @@ public class Config {
 		if (httpClient != null)
 			httpClient.getConnectionManager().shutdown();
 	}
+	
+	@Produces @Singleton ActorSystem createActorSystem() {
+		return ActorSystem.create("ldap_cli");
+	}
+	
+	public void destroyActorSystem(@Disposes @Singleton ActorSystem actorSystem) {
+		actorSystem = null;
+		actorSystem.shutdown();
+	}
+	
+	@Produces @ApplicationScoped /*@PersonRelated*/ @Named("personImageStore") public ImageStore createPersonImageStore(@New ImageStore imageStore) {
+		imageStore.addStyle("thumbnail", "t", 50, 50);
+		imageStore.addStyle("small", "s", 128, 128);
+		imageStore.addStyle("normal", "n", 240, 320);
+		imageStore.setDavUri(props.getProperty("image.dav.uri"));
+		imageStore.setPublicUri(props.getProperty("image.public.uri"));
+		imageStore.setMongoUri(props.getProperty("image.mongo.uri"));
+		imageStore.setNamespace("person");
+		imageStore.init(props.getProperty("image.dav.password"));
+		return imageStore;
+	}
+	
+	public void destroyPersonImageStore(@Disposes /*@PersonRelated*/ ImageStore imageStore) {
+		imageStore.destroy();
+	}
+	
 }
