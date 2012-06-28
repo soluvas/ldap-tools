@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
@@ -17,13 +18,11 @@ import net.sourceforge.cardme.vcard.features.PhotoFeature;
 
 import org.apache.directory.ldap.client.api.LdapConnection;
 import org.apache.directory.shared.ldap.model.entry.Entry;
-import org.apache.directory.shared.ldap.model.exception.LdapException;
 import org.jboss.weld.environment.se.bindings.Parameters;
 import org.jboss.weld.environment.se.events.ContainerInitialized;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.soluvas.image.store.ImageStore;
-import org.soluvas.slug.SlugUtils;
 
 import akka.actor.ActorSystem;
 import akka.dispatch.Await;
@@ -33,7 +32,6 @@ import akka.dispatch.Mapper;
 import akka.util.Duration;
 
 import com.google.common.base.Function;
-import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
@@ -193,6 +191,43 @@ public class LdapCli {
 			} else if ("person-clear".equals(args[0])) {
 				// Delete all person
 				Future<Iterable<String>> clearFuture = personClear.clear();
+				Iterable<String> clearedIter = Await.result(clearFuture, Duration.Inf());
+				ImmutableList<String> cleareds = ImmutableList.copyOf(clearedIter);
+				log.info("Deleted {} entries: {}", cleareds.size(), cleareds);
+			} else if ("personphoto-clear".equals(args[0])) {
+				// Delete all person with photos
+				Future<List<Entry>> peopleFuture = personClear.findAll();
+				Future<Iterable<String>> clearFuture = peopleFuture.flatMap(new Mapper<List<Entry>, Future<Iterable<String>>>() {
+					@Override
+					public Future<Iterable<String>> apply(List<Entry> entries) {
+						return Futures.traverse(entries, new akka.japi.Function<Entry, Future<String>>() {
+							@Override
+							public Future<String> apply(final Entry entry) {
+								// delete photo first, then delete the entry
+								return Futures.future(new Callable<Entry>() {
+									@Override
+									public Entry call() throws Exception {
+										if (entry.containsAttribute("photoId")) {
+											// attempt to delete the photo
+											String photoId = entry.get("photoId").getString();
+											try {
+												personImageStore.delete(photoId);
+											} catch (Exception e) {
+												log.error("Cannot delete photo " + photoId + " for entry " + entry.getDn(), e);
+											}
+										}
+										return entry;
+									}
+								}, actorSystem.dispatcher()).flatMap(new Mapper<Entry, Future<String>>() {
+									@Override
+									public Future<String> apply(Entry entry) {
+										return personClear.deleteRecursively(entry);
+									}
+								});
+							}
+						}, actorSystem.dispatcher()); 
+					}
+				});
 				Iterable<String> clearedIter = Await.result(clearFuture, Duration.Inf());
 				ImmutableList<String> cleareds = ImmutableList.copyOf(clearedIter);
 				log.info("Deleted {} entries: {}", cleareds.size(), cleareds);

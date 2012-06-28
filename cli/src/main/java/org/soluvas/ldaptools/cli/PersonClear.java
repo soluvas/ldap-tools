@@ -111,7 +111,7 @@ public class PersonClear {
 			public List<Entry> call() throws Exception {
 				synchronized (ldap) {
 					EntryCursor cursor = ldap.search(ldapUsersDn, "(objectClass=person)",
-							SearchScope.ONELEVEL, "uid", "cn");
+							SearchScope.ONELEVEL, "uid", "cn", "photoId");
 					return ImmutableList.copyOf(cursor);
 				}
 			}
