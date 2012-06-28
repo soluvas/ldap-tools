@@ -118,7 +118,7 @@ public class VCard2EntryConverter {
 //				BDAY:1993-09-21T00:00:00Z
 				if (vCard.hasBirthday()) {
 					DateTime birthDate = new DateTime(vCard.getBirthDay().getBirthday());
-					String birthDateStr = birthDate.withZone(DateTimeZone.UTC).toString("yyyyMMddHHmm'Z'");
+					String birthDateStr = birthDate.withZone(DateTimeZone.UTC).toString("yyyyMMddHHmmss'Z'");
 					entry.add("birthDate", birthDateStr);
 				}
 
