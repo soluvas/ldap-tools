@@ -65,10 +65,7 @@ public class VCard2EntryConverter {
 					familyName = vCard.getName().getFamilyName();
 				
 				// Complete non-existing names
-				if (formattedName == null)
-					formattedName = (givenName + " " + familyName).trim();
-				
-				String personId = SlugUtils.generateId(formattedName, 0);
+				String personId = vCard.hasUID() ? vCard.getUID().getUID() : SlugUtils.generateId(formattedName);
 				String dn = "uid=" + personId + "," + usersDn;
 				
 //				DefaultEntry entry = new DefaultEntry(schemaManager);
@@ -82,11 +79,11 @@ public class VCard2EntryConverter {
 				for (EmailFeature email : Lists.newArrayList(vCard.getEmails()))
 					entry.add("mail", email.getEmail());
 				
-				if (vCard.hasNicknames()) {
-					String nickname = vCard.getNicknames().getNicknames().next();
-					if (Strings.isNotEmpty(nickname))
-						entry.add("uniqueIdentifier", nickname);
-				}
+//				if (vCard.hasNicknames()) {
+//					String nickname = vCard.getNicknames().getNicknames().next();
+//					if (Strings.isNotEmpty(nickname))
+//						entry.add("uniqueIdentifier", nickname);
+//				}
 				
 				if (vCard.hasAddresses()) {
 					AddressFeature address = vCard.getAddresses().next();
@@ -107,6 +104,9 @@ public class VCard2EntryConverter {
 
 				List<ExtendedFeature> extendedTypes = ImmutableList.copyOf(vCard.getExtendedTypes());
 				for (ExtendedFeature ext : extendedTypes) {
+					if ("X-SCREENNAME".equals(ext.getExtensionName())) {
+						entry.add("uniqueIdentifier", ext.getExtensionData());
+					}
 					if ("X-FACEBOOK-ID".equals(ext.getExtensionName())) {
 						entry.add("facebookId", ext.getExtensionData());
 					}
