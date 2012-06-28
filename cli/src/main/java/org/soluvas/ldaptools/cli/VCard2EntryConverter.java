@@ -1,5 +1,7 @@
 package org.soluvas.ldaptools.cli;
 
+import java.util.Calendar;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
 
@@ -10,11 +12,13 @@ import net.sourceforge.cardme.vcard.VCard;
 import net.sourceforge.cardme.vcard.features.AddressFeature;
 import net.sourceforge.cardme.vcard.features.EmailFeature;
 import net.sourceforge.cardme.vcard.features.ExtendedFeature;
-import net.sourceforge.cardme.vcard.types.ExtendedType;
+import net.sourceforge.cardme.vcard.features.URLFeature;
 
 import org.apache.directory.shared.ldap.model.entry.DefaultEntry;
 import org.apache.directory.shared.ldap.model.entry.Entry;
 import org.apache.directory.shared.util.Strings;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.soluvas.slug.SlugUtils;
@@ -79,12 +83,18 @@ public class VCard2EntryConverter {
 				for (EmailFeature email : Lists.newArrayList(vCard.getEmails()))
 					entry.add("mail", email.getEmail());
 				
-//				if (vCard.hasNicknames()) {
-//					String nickname = vCard.getNicknames().getNicknames().next();
+//				NICKNAME:shansaiichan
+				if (vCard.hasNicknames()) {
+					for (Iterator<String> iter = vCard.getNicknames().getNicknames(); iter.hasNext(); ) {
+						String nickname = iter.next();
+						entry.add("nickname", nickname);
+					}
 //					if (Strings.isNotEmpty(nickname))
 //						entry.add("uniqueIdentifier", nickname);
-//				}
+				}
 				
+//				ADR;TYPE=INTL,POSTAL,PARCEL,WORK,PREF:;;;Surabaya;;;Indonesia
+//				ADR;TYPE=INTL,POSTAL,PARCEL,HOME:;;;Surabaya;;;Indonesia
 				if (vCard.hasAddresses()) {
 					AddressFeature address = vCard.getAddresses().next();
 					if (address.hasStreetAddress() && Strings.isNotEmpty(address.getStreetAddress()))
@@ -95,6 +105,21 @@ public class VCard2EntryConverter {
 						entry.add("st", address.getRegion());
 					if (address.hasCountryName() && Strings.isNotEmpty(address.getCountryName()))
 						entry.add("c", address.getCountryName());
+				}
+				
+//				URL:http://www.facebook.com/shansaiichan
+				if (vCard.hasURLs()) {
+					for (Iterator<URLFeature> iter = vCard.getURLs(); iter.hasNext(); ) {
+						URLFeature feature = iter.next();
+						entry.add("websiteUri", feature.getURL().toString() );
+					}
+				}
+
+//				BDAY:1993-09-21T00:00:00Z
+				if (vCard.hasBirthday()) {
+					DateTime birthDate = new DateTime(vCard.getBirthDay().getBirthday());
+					String birthDateStr = birthDate.withZone(DateTimeZone.UTC).toString("yyyyMMddHHmm'Z'");
+					entry.add("birthDate", birthDateStr);
 				}
 
 				entry.add("virtualMail", personId + "@member.berbatik.com");
@@ -107,26 +132,22 @@ public class VCard2EntryConverter {
 					if ("X-SCREENNAME".equals(ext.getExtensionName())) {
 						entry.add("uniqueIdentifier", ext.getExtensionData());
 					}
+//					X-FACEBOOK-ID:1225303239
 					if ("X-FACEBOOK-ID".equals(ext.getExtensionName())) {
 						entry.add("facebookId", ext.getExtensionData());
 					}
+//					X-FACEBOOK-USERNAME:shansaiichan
 					if ("X-FACEBOOK-USERNAME".equals(ext.getExtensionName())) {
 						entry.add("facebookUsername", ext.getExtensionData());
 					}
-					// TODO: X-GENDER:Female
-					// TODO: BDAY
+					// X-GENDER:Female
+					if ("X-GENDER".equals(ext.getExtensionName())) {
+						entry.add("gender", ext.getExtensionData().toLowerCase());
+					}
 				}
 				
-//				NICKNAME:shansaiichan
-//				URL:http://www.facebook.com/shansaiichan
-//				BDAY:1993-09-21T00:00:00Z
-//				ADR;TYPE=INTL,POSTAL,PARCEL,WORK,PREF:;;;Surabaya;;;Indonesia
-//				ADR;TYPE=INTL,POSTAL,PARCEL,HOME:;;;Surabaya;;;Indonesia
 //				PHOTO;ENCODING=BASE64:/9j/4AAQSkZJRgABAgAAAQABAAD//gAEKgD/4gIcSUNDX1BST0ZJT
-//				X-FACEBOOK-ID:1225303239
-//				X-FACEBOOK-USERNAME:shansaiichan
-//				X-GENDER:Female
-
+				
 				return entry;
 			}
 		}, actorSystem.dispatcher());

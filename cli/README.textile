@@ -25,6 +25,15 @@ mvn deploy:deploy-file -f ~/git/webdav-deployer/pom.xml \
   -DrepositoryId=soluvas.org.thirdparty -Dpackaging=jar -DgeneratePom=true
 
 
+h2. LDAP Schemas
+
+Required schemas:
+
+* soluvas-framework repository > soluvas Schema project > socialperson schema
+* Bippo models > bippo Schema project > facebook schema
+* Bippo models > bippo Schema project > twitter schema
+
+
 h2. Configuration
 
 h3. LDAP Server
