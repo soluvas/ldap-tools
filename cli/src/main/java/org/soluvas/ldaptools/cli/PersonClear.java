@@ -92,16 +92,7 @@ public class PersonClear {
 	}
 	
 	public Future<Iterable<String>> clear() {
-		return Futures.future(new Callable<List<Entry>>() {
-			@Override
-			public List<Entry> call() throws Exception {
-				synchronized (ldap) {
-					EntryCursor cursor = ldap.search(ldapUsersDn, "(objectClass=person)", SearchScope.ONELEVEL, "uid", "cn");
-					return ImmutableList.copyOf(cursor);
-				}
-			}
-		}, actorSystem.dispatcher())
-		.flatMap(new Mapper<List<Entry>, Future<Iterable<String>>>() {
+		return findAll().flatMap(new Mapper<List<Entry>, Future<Iterable<String>>>() {
 			@Override
 			public Future<Iterable<String>> apply(List<Entry> entries) {
 				return Futures.traverse(entries, new Function<Entry, Future<String>>() {
@@ -112,6 +103,19 @@ public class PersonClear {
 				}, actorSystem.dispatcher());
 			}
 		});
+	}
+
+	public Future<List<Entry>> findAll() {
+		return Futures.future(new Callable<List<Entry>>() {
+			@Override
+			public List<Entry> call() throws Exception {
+				synchronized (ldap) {
+					EntryCursor cursor = ldap.search(ldapUsersDn, "(objectClass=person)",
+							SearchScope.ONELEVEL, "uid", "cn");
+					return ImmutableList.copyOf(cursor);
+				}
+			}
+		}, actorSystem.dispatcher());
 	}
 
 }

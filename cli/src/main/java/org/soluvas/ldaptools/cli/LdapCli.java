@@ -196,6 +196,14 @@ public class LdapCli {
 				Iterable<String> clearedIter = Await.result(clearFuture, Duration.Inf());
 				ImmutableList<String> cleareds = ImmutableList.copyOf(clearedIter);
 				log.info("Deleted {} entries: {}", cleareds.size(), cleareds);
+			} else if ("person-ls".equals(args[0])) {
+				// List all person
+				Future<List<Entry>> peopleFuture = personClear.findAll();
+				List<Entry> people = Await.result(peopleFuture, Duration.Inf());
+				log.info("Got {} entries: {}", people.size());
+				for (Entry person : people) {
+					System.out.println(person.getDn().getRdn().getValue().getString());
+				}
 			}
 		} catch (Exception ex) {
 			log.error("Error executing command", ex);
