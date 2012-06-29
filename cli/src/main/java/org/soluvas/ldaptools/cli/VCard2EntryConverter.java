@@ -131,6 +131,7 @@ public class VCard2EntryConverter {
 				for (ExtendedFeature ext : extendedTypes) {
 					if ("X-SCREENNAME".equals(ext.getExtensionName())) {
 						entry.add("uniqueIdentifier", ext.getExtensionData());
+						entry.add("canonicalIdentifier", SlugUtils.canonicalize(ext.getExtensionData()));
 					}
 //					X-FACEBOOK-ID:1225303239
 					if ("X-FACEBOOK-ID".equals(ext.getExtensionName())) {
