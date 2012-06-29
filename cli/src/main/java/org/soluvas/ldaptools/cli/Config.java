@@ -1,5 +1,6 @@
 package org.soluvas.ldaptools.cli;
 
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Properties;
@@ -48,7 +49,7 @@ public class Config implements Serializable {
 		actorSystem = ActorSystem.create("ldap_cli");
 
 		props = new Properties();
-		props.load(getClass().getResourceAsStream("/ldap-cli.properties"));
+		props.load(new FileReader("ldap-cli.properties"));
 		
 		ldapUsersDn = props.getProperty("ldap.users.basedn");
 		
