@@ -46,7 +46,7 @@ public class Config implements Serializable {
 	
 	@PostConstruct public void init() throws IOException {
 		log.info("Creating ActorSystem");
-		actorSystem = ActorSystem.create("ldap_cli");
+		actorSystem = ActorSystem.create("ldapcli");
 
 		props = new Properties();
 		props.load(new FileReader("ldap-cli.properties"));
