@@ -14,3 +14,5 @@ image.public.uri=http://dav.berbatik.annafi.dev/
 # Collection name is always ${namespace}Image = personImage
 # If possible, Image MongoDB should be separate than data MongoDB
 image.mongo.uri=mongodb://127.0.0.1:27017/berbatik_image
+
+conversation.person.domain=member.berbatik.com

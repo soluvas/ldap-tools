@@ -42,6 +42,7 @@ public class Config implements Serializable {
 	@Produces private LdapConnection ldap;
 	@Produces private SchemaManager schemaManager;
 	@Produces @Named("ldapUsersDn") private String ldapUsersDn;
+	@Produces @Named("conversationPersonDomain") private String conversationPersonDomain;
 	private Properties props;
 	
 	@PostConstruct public void init() throws IOException {
@@ -52,7 +53,8 @@ public class Config implements Serializable {
 		props.load(new FileReader("ldap-cli.properties"));
 		
 		ldapUsersDn = props.getProperty("ldap.users.basedn");
-		
+		conversationPersonDomain = props.getProperty("conversation.person.domain");
+
 		ldap = new LdapNetworkConnection(props.getProperty("ldap.bind.host"), Integer.valueOf(props.getProperty("ldap.bind.port")),
 				Boolean.valueOf(props.getProperty("ldap.bind.ssl")));
 		try {

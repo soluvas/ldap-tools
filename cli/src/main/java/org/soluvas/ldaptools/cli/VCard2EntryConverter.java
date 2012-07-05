@@ -39,6 +39,7 @@ public class VCard2EntryConverter {
 	private transient Logger log = LoggerFactory.getLogger(VCard2EntryConverter.class);
 	@Inject private ActorSystem actorSystem;
 	@Inject @Named("ldapUsersDn") private String usersDn;
+	@Inject @Named("conversationPersonDomain") private String conversationPersonDomain;
 //	@Inject private SchemaManager schemaManager;
 	
 	public VCard2EntryConverter() {
@@ -122,7 +123,7 @@ public class VCard2EntryConverter {
 					entry.add("birthDate", birthDateStr);
 				}
 
-				entry.add("virtualMail", personId + "@member.berbatik.com");
+				entry.add("virtualMail", personId + "@" + conversationPersonDomain);
 				
 				// TODO: configurable default password, or if it is omitted
 				entry.add("userPassword", "bippo");
