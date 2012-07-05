@@ -24,6 +24,23 @@ mvn deploy:deploy-file -f ~/git/webdav-deployer/pom.xml \
   -DgroupId=net.sourceforge.cardme -DartifactId=cardme -Dversion=0.3.4.01 -Dclassifier=sources \
   -DrepositoryId=soluvas.org.thirdparty -Dpackaging=jar -DgeneratePom=true
 
+h2. Building
+
+1. Maven Install soluvas-framework first
+
+bc. cd ~/git/soluvas-framework
+mvn install -DskipTests
+
+2. Copy dependencies
+
+bc. cd ~/git/ldap-tools/cli
+mvn dependency:copy-dependencies 
+
+3. Build LDAP CLI
+
+bc. cd ~/git/ldap-tools/cli
+mvn install -DskipTests
+
 
 h2. LDAP Schemas
 
