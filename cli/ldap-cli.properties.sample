@@ -1,6 +1,7 @@
 # ldap-cli properties
 ldap.bind.host=localhost
 ldap.bind.port=10389
+ldap.bind.ssl=false
 ldap.bind.dn=uid=admin,ou=system
 ldap.bind.password=secret
 ldap.users.basedn=ou=users,dc=berbatik,dc=com
