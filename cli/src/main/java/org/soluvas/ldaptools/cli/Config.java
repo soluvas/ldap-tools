@@ -3,6 +3,8 @@ package org.soluvas.ldaptools.cli;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Serializable;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.Properties;
 
 import javax.annotation.PostConstruct;
@@ -12,8 +14,10 @@ import javax.enterprise.inject.Disposes;
 import javax.enterprise.inject.New;
 import javax.enterprise.inject.Produces;
 import javax.inject.Named;
+import javax.net.ssl.X509TrustManager;
 
 import org.apache.directory.ldap.client.api.LdapConnection;
+import org.apache.directory.ldap.client.api.LdapConnectionConfig;
 import org.apache.directory.ldap.client.api.LdapNetworkConnection;
 import org.apache.directory.shared.ldap.model.exception.LdapException;
 import org.apache.directory.shared.ldap.model.schema.SchemaManager;
@@ -55,10 +59,44 @@ public class Config implements Serializable {
 		ldapUsersDn = props.getProperty("ldap.users.basedn");
 		conversationPersonDomain = props.getProperty("conversation.person.domain");
 
-		ldap = new LdapNetworkConnection(props.getProperty("ldap.bind.host"), Integer.valueOf(props.getProperty("ldap.bind.port")),
-				Boolean.valueOf(props.getProperty("ldap.bind.ssl")));
+		String bindHost = props.getProperty("ldap.bind.host");
+		String bindPortStr = props.getProperty("ldap.bind.port");
+		boolean bindSsl = Boolean.valueOf(props.getProperty("ldap.bind.ssl", "false"));
+		String bindDn = props.getProperty("ldap.bind.dn");
+		if (bindHost == null || bindPortStr == null || bindDn == null) {
+			throw new RuntimeException("LDAP Configuration must be provided");
+		} 
+		int bindPort = Integer.valueOf(bindPortStr);
+		
+		log.info("Connecting to LDAP server {}:{} SSL={}", new Object[] { bindHost, bindPort, bindSsl });
+		LdapConnectionConfig ldapConfig = new LdapConnectionConfig();
+		ldapConfig.setLdapHost(bindHost);
+		ldapConfig.setLdapPort(bindPort);
+		ldapConfig.setUseSsl(bindSsl);
+		X509TrustManager alwaysTrustManager = new X509TrustManager() {
+			@Override
+			public X509Certificate[] getAcceptedIssuers() {
+				return null;
+			}
+			
+			@Override
+			public void checkServerTrusted(X509Certificate[] chain, String authType)
+					throws CertificateException {
+				log.warn("Trusting {} SERVER certificate {}", authType, chain);
+			}
+			
+			@Override
+			public void checkClientTrusted(X509Certificate[] chain, String authType)
+					throws CertificateException {
+				log.warn("Trusting {} CLIENT certificate {}", authType, chain);
+			}
+		};
+		ldapConfig.setTrustManagers(alwaysTrustManager);
+		ldap = new LdapNetworkConnection(ldapConfig);
+		
 		try {
-			ldap.bind(props.getProperty("ldap.bind.dn"), props.getProperty("ldap.bind.password"));
+			ldap.connect();
+			ldap.bind(bindDn, props.getProperty("ldap.bind.password"));
 		} catch (LdapException e) {
 			throw new RuntimeException("Error during LDAP bind", e);
 		}
