@@ -26,7 +26,7 @@ public class EntryAdder {
 	
 	private transient Logger log = LoggerFactory.getLogger(EntryAdder.class);
 	@Inject private ActorSystem actorSystem;
-	@Inject private LdapConnection ldap;
+	@Inject private transient LdapConnection ldap;
 	
 	public EntryAdder() {
 		super();

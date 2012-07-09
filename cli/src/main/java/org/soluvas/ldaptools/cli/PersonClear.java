@@ -29,7 +29,7 @@ public class PersonClear {
 	
 	private transient Logger log = LoggerFactory.getLogger(PersonClear.class);
 	@Inject private ActorSystem actorSystem;
-	@Inject private LdapConnection ldap;
+	@Inject private transient LdapConnection ldap;
 	@Inject @Named("ldapUsersDn") private String ldapUsersDn;
 	
 	public PersonClear() {

@@ -55,7 +55,7 @@ public class LdapCli {
 	@Inject 
 	PersonClear personClear;
 	@Inject @Named("ldapUsersDn") private String ldapUsersDn;
-	@Inject LdapConnection ldap;
+	@Inject private transient LdapConnection ldap;
 	
 	public void run(@Observes ContainerInitialized e) {
 		log.info("ldap-cli starting");
