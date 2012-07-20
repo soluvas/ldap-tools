@@ -60,7 +60,6 @@ h3. LDAP Server
 h3. Image Server
 
 
-
 h2. Read vCard File(s)
 
 Just for testing.
