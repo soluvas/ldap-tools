@@ -1,4 +1,3 @@
-
 #!/usr/bin/env ruby
 # Note: ActiveLdap can't read Extended LDIF format, use ldapsearch with -L
 # sudo gem install activeldap
