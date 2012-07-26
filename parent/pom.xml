@@ -111,12 +111,11 @@
 				<enabled>true</enabled>
 			</snapshots>
 		</repository>
-		<!-- TODO: maven.soluvas.org is deprecated, please use nexus.bippo.co.id -->
 		<repository>
-			<id>soluvas.org.thirdparty</id>
-			<url>http://maven.soluvas.org/thirdparty</url>
+			<id>bippo-nexus-public</id>
+			<url>http://nexus.bippo.co.id/nexus/content/groups/public/</url>
 			<snapshots>
-				<enabled>false</enabled>
+				<enabled>true</enabled>
 			</snapshots>
 		</repository>
 		<repository>
