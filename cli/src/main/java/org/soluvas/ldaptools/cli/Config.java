@@ -18,7 +18,8 @@ import org.apache.directory.ldap.client.api.LdapConnectionConfig;
 import org.apache.directory.ldap.client.api.LdapConnectionPool;
 import org.apache.directory.ldap.client.api.PoolableLdapConnectionFactory;
 import org.apache.http.client.HttpClient;
-import org.apache.http.impl.client.ContentEncodingHttpClient;
+import org.apache.http.impl.client.DecompressingHttpClient;
+import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.PoolingClientConnectionManager;
 import org.apache.http.params.BasicHttpParams;
 import org.slf4j.Logger;
@@ -67,10 +68,9 @@ public class Config implements Serializable {
 		PoolableLdapConnectionFactory ldapConnectionFactory = new PoolableLdapConnectionFactory(ldapConfig);
 		ldapPool = new LdapConnectionPool(ldapConnectionFactory);
 		
-		// this works:
-		httpClient = new ContentEncodingHttpClient(new PoolingClientConnectionManager(), new BasicHttpParams());
-		// this doesn't work:
-//		 HttpClient httpClient = new DecompressingHttpClient(new DefaultHttpClient(new PoolingClientConnectionManager(), new BasicHttpParams()));
+		// DecompressingHttpClient works since httpclient 4.2.1
+		 httpClient = new DecompressingHttpClient(new DefaultHttpClient(new PoolingClientConnectionManager(),
+				 new BasicHttpParams()));
 	}
 	
 	@PreDestroy public void destroy() {
