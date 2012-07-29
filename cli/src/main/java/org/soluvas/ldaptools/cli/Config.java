@@ -3,8 +3,6 @@ package org.soluvas.ldaptools.cli;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Serializable;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
 import java.util.Properties;
 
 import javax.annotation.PostConstruct;
@@ -14,13 +12,11 @@ import javax.enterprise.inject.Disposes;
 import javax.enterprise.inject.New;
 import javax.enterprise.inject.Produces;
 import javax.inject.Named;
-import javax.net.ssl.X509TrustManager;
 
 import org.apache.directory.ldap.client.api.LdapConnection;
 import org.apache.directory.ldap.client.api.LdapConnectionConfig;
-import org.apache.directory.ldap.client.api.LdapNetworkConnection;
-import org.apache.directory.shared.ldap.model.exception.LdapException;
-import org.apache.directory.shared.ldap.model.schema.SchemaManager;
+import org.apache.directory.ldap.client.api.LdapConnectionPool;
+import org.apache.directory.ldap.client.api.PoolableLdapConnectionFactory;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.ContentEncodingHttpClient;
 import org.apache.http.impl.conn.PoolingClientConnectionManager;
@@ -28,6 +24,7 @@ import org.apache.http.params.BasicHttpParams;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.soluvas.image.store.ImageStore;
+import org.soluvas.ldap.LdapUtils;
 
 import akka.actor.ActorSystem;
 
@@ -43,11 +40,11 @@ public class Config implements Serializable {
 	
 	@Produces private ActorSystem actorSystem;
 	@Produces private HttpClient httpClient;
-	@Produces private LdapConnection ldap;
-	@Produces private SchemaManager schemaManager;
 	@Produces @Named("ldapUsersDn") private String ldapUsersDn;
 	@Produces @Named("conversationPersonDomain") private String conversationPersonDomain;
 	private Properties props;
+
+	private LdapConnectionPool ldapPool;
 	
 	@PostConstruct public void init() throws IOException {
 		log.info("Creating ActorSystem");
@@ -59,48 +56,16 @@ public class Config implements Serializable {
 		ldapUsersDn = props.getProperty("ldap.users.basedn");
 		conversationPersonDomain = props.getProperty("conversation.person.domain");
 
-		String bindHost = props.getProperty("ldap.bind.host");
-		String bindPortStr = props.getProperty("ldap.bind.port");
-		boolean bindSsl = Boolean.valueOf(props.getProperty("ldap.bind.ssl", "false"));
+		String ldapUri = props.getProperty("ldap.uri");
 		String bindDn = props.getProperty("ldap.bind.dn");
-		if (bindHost == null || bindPortStr == null || bindDn == null) {
-			throw new RuntimeException("LDAP Configuration must be provided");
-		} 
-		int bindPort = Integer.valueOf(bindPortStr);
-		
-		log.info("Connecting to LDAP server {}:{} SSL={}", new Object[] { bindHost, bindPort, bindSsl });
-		LdapConnectionConfig ldapConfig = new LdapConnectionConfig();
-		ldapConfig.setLdapHost(bindHost);
-		ldapConfig.setLdapPort(bindPort);
-		ldapConfig.setUseSsl(bindSsl);
-		X509TrustManager alwaysTrustManager = new X509TrustManager() {
-			@Override
-			public X509Certificate[] getAcceptedIssuers() {
-				return null;
-			}
-			
-			@Override
-			public void checkServerTrusted(X509Certificate[] chain, String authType)
-					throws CertificateException {
-				log.warn("Trusting {} SERVER certificate {}", authType, chain);
-			}
-			
-			@Override
-			public void checkClientTrusted(X509Certificate[] chain, String authType)
-					throws CertificateException {
-				log.warn("Trusting {} CLIENT certificate {}", authType, chain);
-			}
-		};
-		ldapConfig.setTrustManagers(alwaysTrustManager);
-		ldap = new LdapNetworkConnection(ldapConfig);
-		
-		try {
-			ldap.connect();
-			ldap.bind(bindDn, props.getProperty("ldap.bind.password"));
-		} catch (LdapException e) {
-			throw new RuntimeException("Error during LDAP bind", e);
+		if (ldapUri == null || bindDn == null) {
+			throw new RuntimeException("LDAP connection settings required");
 		}
-		schemaManager = ldap.getSchemaManager();
+		log.debug("Connecting to LDAP server {} as {}", new Object[] { ldapUri, bindDn });
+		String bindPassword = props.getProperty("ldap.bind.password");
+		LdapConnectionConfig ldapConfig = LdapUtils.createTrustingConfig(ldapUri, bindDn, bindPassword);
+		PoolableLdapConnectionFactory ldapConnectionFactory = new PoolableLdapConnectionFactory(ldapConfig);
+		ldapPool = new LdapConnectionPool(ldapConnectionFactory);
 		
 		// this works:
 		httpClient = new ContentEncodingHttpClient(new PoolingClientConnectionManager(), new BasicHttpParams());
@@ -109,16 +74,10 @@ public class Config implements Serializable {
 	}
 	
 	@PreDestroy public void destroy() {
-		if (schemaManager != null) {
-			schemaManager = null;
-		}
-		if (ldap != null) {
-			try {
-				ldap.close();
-			} catch (IOException e) {
-				log.warn("Error closing LDAP Connection", e);
-			}
-			ldap = null;
+		try {
+			ldapPool.close();
+		} catch (Exception e) {
+			log.warn("Error closing LDAP connection pool", e);
 		}
 		if (httpClient != null)
 			httpClient.getConnectionManager().shutdown();
@@ -130,6 +89,17 @@ public class Config implements Serializable {
 		log.info("ActorSystem shut down");
 	}
 	
+	@Produces public LdapConnection createLdapConnection() throws Exception {
+		return ldapPool.getConnection();
+	}
+	
+	public void destroyLdapConnection(@Disposes LdapConnection ldap) {
+		try {
+			ldapPool.releaseConnection(ldap);
+		} catch (Exception e) {
+			log.warn("Error releasing LDAP connection", e);
+		}
+	}
 	@Produces @ApplicationScoped /*@PersonRelated*/ @Named("personImageStore") public ImageStore createPersonImageStore(@New ImageStore imageStore) {
 		imageStore.setSystem(actorSystem);
 		imageStore.addStyle("thumbnail", "t", 50, 50);

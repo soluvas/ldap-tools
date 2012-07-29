@@ -1,6 +1,5 @@
 package org.soluvas.ldaptools.cli;
 
-import java.util.Calendar;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -40,13 +39,12 @@ public class VCard2EntryConverter {
 	@Inject private ActorSystem actorSystem;
 	@Inject @Named("ldapUsersDn") private String usersDn;
 	@Inject @Named("conversationPersonDomain") private String conversationPersonDomain;
-//	@Inject private SchemaManager schemaManager;
 	
 	public VCard2EntryConverter() {
 		super();
 	}
 	
-	public VCard2EntryConverter(ActorSystem actorSystem/*, SchemaManager schemaManager*/) {
+	public VCard2EntryConverter(ActorSystem actorSystem) {
 		super();
 		this.actorSystem = actorSystem;
 //		this.schemaManager = schemaManager;
