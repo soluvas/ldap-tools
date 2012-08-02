@@ -109,7 +109,7 @@ public class Config implements Serializable {
 		imageStore.setPublicUri(props.getProperty("image.public.uri"));
 		imageStore.setMongoUri(props.getProperty("image.mongo.uri"));
 		imageStore.setNamespace("person");
-		imageStore.init(props.getProperty("image.dav.password"));
+		imageStore.init();
 		return imageStore;
 	}
 	
