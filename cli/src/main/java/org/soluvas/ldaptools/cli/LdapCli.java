@@ -2,8 +2,12 @@ package org.soluvas.ldaptools.cli;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileWriter;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -17,12 +21,15 @@ import net.sourceforge.cardme.vcard.VCard;
 import net.sourceforge.cardme.vcard.features.PhotoFeature;
 
 import org.apache.directory.ldap.client.api.LdapConnection;
+import org.apache.directory.shared.ldap.model.entry.Attribute;
 import org.apache.directory.shared.ldap.model.entry.Entry;
+import org.apache.directory.shared.ldap.model.message.SearchScope;
 import org.jboss.weld.environment.se.bindings.Parameters;
 import org.jboss.weld.environment.se.events.ContainerInitialized;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.soluvas.image.store.ImageStore;
+import org.soluvas.ldap.LdapUtils;
 
 import akka.actor.ActorSystem;
 import akka.dispatch.Await;
@@ -30,6 +37,7 @@ import akka.dispatch.Future;
 import akka.dispatch.Futures;
 import akka.dispatch.Mapper;
 import akka.util.Duration;
+import au.com.bytecode.opencsv.CSVWriter;
 
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
@@ -229,7 +237,7 @@ public class LdapCli {
 					}
 				});
 				Iterable<String> clearedIter = Await.result(clearFuture, Duration.Inf());
-				ImmutableList<String> cleareds = ImmutableList.copyOf(clearedIter);
+				List<String> cleareds = ImmutableList.copyOf(clearedIter);
 				log.info("Deleted {} entries: {}", cleareds.size(), cleareds);
 			} else if ("person-ls".equals(args[0])) {
 				// List all person
@@ -238,6 +246,44 @@ public class LdapCli {
 				log.info("Got {} entries: {}", people.size());
 				for (Entry person : people) {
 					System.out.println(person.getDn().getRdn().getValue().getString());
+				}
+			} else if ("export-csv".equals(args[0])) {
+				// List all person
+				final String exportFileName = "output/ldap_users.csv";
+				log.info("Exporting LDAP entries to CSV: {}", exportFileName);
+				CSVWriter csv = new CSVWriter(new FileWriter(exportFileName));
+				try {
+					List<Entry> entries = LdapUtils.asList( ldap.search(ldapUsersDn, "(objectclass=person)", SearchScope.ONELEVEL) );
+					log.info("LDAP Search returned {} entries", entries.size());
+					// get the attribute names first
+					Set<String> attrNamesSet = new HashSet<String>();
+					for (Entry entry : entries) {
+						Collection<Attribute> attrs = entry.getAttributes();
+						for (Attribute attr : attrs)
+							attrNamesSet.add(attr.getId());
+					}
+					log.info("Entries contain {} attributes: {}", attrNamesSet.size(), attrNamesSet);
+					List<String> attrNames = ImmutableList.copyOf(attrNamesSet);
+					csv.writeNext(attrNames.toArray(new String[] {}));
+					// then fill entries
+					for (final Entry entry : entries) {
+						log.trace("Exporting entry {}", entry.getDn());
+						List<String> row = Lists.transform(attrNames, new Function<String, String>() {
+							@Override
+							public String apply(String attrName) {
+								if (entry.containsAttribute(attrName))
+									return entry.get(attrName).get().getString();
+								else
+									return "";
+							}
+						});
+						String[] rowValues = row.toArray(new String[] {});
+						csv.writeNext(rowValues);
+					}
+					log.info("{} entries with {} attributes exported to {}", new Object[] {
+							entries.size(), attrNamesSet.size(), exportFileName });
+				} finally {
+					csv.close();
 				}
 			}
 		} catch (Exception ex) {

@@ -26,6 +26,12 @@
 			<groupId>org.soluvas</groupId>
 			<artifactId>soluvas-ldap</artifactId>
 		</dependency>
+		
+		<dependency>
+			<groupId>net.sf.opencsv</groupId>
+			<artifactId>opencsv</artifactId>
+			<version>2.3</version>
+		</dependency>
 
 		<dependency>
 			<groupId>org.apache.directory.shared</groupId>

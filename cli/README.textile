@@ -110,3 +110,9 @@ h2. Clear All Person (WARNING: DANGEROUS!)
 Delete all @objectClass=person@ entries inside the Users DN specified in @ldap-cli.properties@. 
 
 bc. ./ldapcli.sh person-clear
+
+
+h2. Running from Eclipse
+
+This is a CDI / Weld SE application, so create a Java Application launcher with main class
+@org.jboss.weld.environment.se.StartMain@.
