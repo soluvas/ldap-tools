@@ -1,0 +1,112 @@
+h1. LDAP Command Line Interface (CLI)
+
+h2. Build Dependencies
+
+* "CardMe vCard library":http://sourceforge.net/projects/cardme/. @net.sourceforge.cardme:cardme:0.3.4.01@ (deployed to Soluvas.org thirdparty repository) 
+
+Internal note: To deploy CardMe artifacts to Soluvas.org Thirdparty repository:
+
+bc.. mvn deploy:deploy-file -f ~/git/webdav-deployer/pom.xml \
+  -Durl=dav:http://maven.soluvas.org/thirdparty \
+  -Dfile=/together/Technology/Enterprise_Integration/vCard/cardme-0.3.4.01.jar \
+  -DgroupId=net.sourceforge.cardme -DartifactId=cardme -Dversion=0.3.4.01 \
+  -DrepositoryId=soluvas.org.thirdparty -Dpackaging=jar -DgeneratePom=true
+
+mvn deploy:deploy-file -f ~/git/webdav-deployer/pom.xml \
+  -Durl=dav:http://maven.soluvas.org/thirdparty \
+  -Dfile=/together/Technology/Enterprise_Integration/vCard/cardme-0.3.4.01-javadoc.jar \
+  -DgroupId=net.sourceforge.cardme -DartifactId=cardme -Dversion=0.3.4.01 -Dclassifier=javadoc \
+  -DrepositoryId=soluvas.org.thirdparty -Dpackaging=jar -DgeneratePom=true
+
+mvn deploy:deploy-file -f ~/git/webdav-deployer/pom.xml \
+  -Durl=dav:http://maven.soluvas.org/thirdparty \
+  -Dfile=/together/Technology/Enterprise_Integration/vCard/cardme-src-0.3.4.01.jar \
+  -DgroupId=net.sourceforge.cardme -DartifactId=cardme -Dversion=0.3.4.01 -Dclassifier=sources \
+  -DrepositoryId=soluvas.org.thirdparty -Dpackaging=jar -DgeneratePom=true
+
+h2. Building
+
+1. Maven Install soluvas-framework first
+
+bc. cd ~/git/soluvas-framework
+mvn install -DskipTests
+
+2. Copy dependencies
+
+bc. cd ~/git/ldap-tools/cli
+mvn dependency:copy-dependencies 
+
+3. Build LDAP CLI
+
+bc. cd ~/git/ldap-tools/cli
+mvn install -DskipTests
+
+
+h2. LDAP Schemas
+
+Required schemas:
+
+* soluvas-framework repository > soluvas Schema project > socialperson schema
+* Bippo models > bippo Schema project > facebook schema
+* Bippo models > bippo Schema project > twitter schema
+
+
+h2. Configuration
+
+h3. LDAP Server
+
+
+
+h3. Image Server
+
+
+h2. Read vCard File(s)
+
+Just for testing.
+
+Syntax:
+
+bc. ./ldapcli.sh vcard-read FILE [FILE ...]
+
+Example:
+
+bc. ./ldapcli.sh import-vcard output/vcard/facebook_1225303239_santi_mutiara_sari.vcf output/vcard/facebook_1782503068_fitrya_murbarani.vcf
+
+h2. Convert vCard File(s) to LDIF
+
+Syntax:
+
+bc. ./ldapcli.sh vcard-to-ldif FILE [FILE ...]
+
+Example:
+
+bc. ./ldapcli.sh vcard-to-ldif output/vcard/facebook_1225303239_santi_mutiara_sari.vcf output/vcard/facebook_1782503068_fitrya_murbarani.vcf
+
+h2. Import from vCard (WITHOUT Photo) File(s)
+
+Syntax:
+
+bc. ./ldapcli.sh import-vcard FILE [FILE ...]
+
+Example:
+
+bc. ./ldapcli.sh import-vcard output/vcard/facebook_1225303239_santi_mutiara_sari.vcf output/vcard/facebook_1782503068_fitrya_murbarani.vcf
+
+h2. Import from vCard (WITH Photo) File(s)
+
+Photos will be stored on a Soluvas Image Store structure (WebDAV repository + MongoDB).
+They will not be stored in a LDAP "photo" attribute.
+
+Syntax:
+
+bc. ./ldapcli.sh import-vcardphoto FILE [FILE ...]
+
+Example:
+
+bc. ./ldapcli.sh import-vcardphoto output/vcard/facebook_1225303239_santi_mutiara_sari.vcf output/vcard/facebook_1782503068_fitrya_murbarani.vcf
+
+h2. Clear All Person (WARNING: DANGEROUS!)
+
+Delete all @objectClass=person@ entries inside the Users DN specified in @ldap-cli.properties@. 
+
+bc. ./ldapcli.sh person-clear
