@@ -262,6 +262,8 @@ public class LdapCli {
 						for (Attribute attr : attrs)
 							attrNamesSet.add(attr.getId());
 					}
+					// exclude userPassword attribute
+					attrNamesSet.remove("userpassword");
 					log.info("Entries contain {} attributes: {}", attrNamesSet.size(), attrNamesSet);
 					List<String> attrNames = ImmutableList.copyOf(attrNamesSet);
 					csv.writeNext(attrNames.toArray(new String[] {}));
