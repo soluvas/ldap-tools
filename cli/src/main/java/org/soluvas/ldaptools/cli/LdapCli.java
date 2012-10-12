@@ -28,7 +28,7 @@ import org.jboss.weld.environment.se.bindings.Parameters;
 import org.jboss.weld.environment.se.events.ContainerInitialized;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.soluvas.image.store.ImageStore;
+import org.soluvas.image.store.ImageRepository;
 import org.soluvas.ldap.LdapUtils;
 
 import akka.actor.ActorSystem;
@@ -59,7 +59,7 @@ public class LdapCli {
 	@Inject 
 	EntryAdder entryAdder;
 	@Inject 
-	@Named("personImageStore") ImageStore personImageStore;
+	@Named("personImageStore") ImageRepository personImageStore;
 	@Inject 
 	PersonClear personClear;
 	@Inject @Named("ldapUsersDn") private String ldapUsersDn;

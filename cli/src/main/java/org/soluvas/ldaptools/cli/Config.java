@@ -24,7 +24,7 @@ import org.apache.http.impl.conn.PoolingClientConnectionManager;
 import org.apache.http.params.BasicHttpParams;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.soluvas.image.store.ImageStore;
+import org.soluvas.image.store.ImageRepository;
 import org.soluvas.ldap.LdapUtils;
 
 import akka.actor.ActorSystem;
@@ -100,7 +100,7 @@ public class Config implements Serializable {
 			log.warn("Error releasing LDAP connection", e);
 		}
 	}
-	@Produces @ApplicationScoped /*@PersonRelated*/ @Named("personImageStore") public ImageStore createPersonImageStore(@New ImageStore imageStore) {
+	@Produces @ApplicationScoped /*@PersonRelated*/ @Named("personImageStore") public ImageRepository createPersonImageStore(@New ImageRepository imageStore) {
 		imageStore.setSystem(actorSystem);
 		imageStore.addStyle("thumbnail", "t", 50, 50);
 		imageStore.addStyle("small", "s", 128, 128);
@@ -113,7 +113,7 @@ public class Config implements Serializable {
 		return imageStore;
 	}
 	
-	public void destroyPersonImageStore(@Disposes @Named("personImageStore") /*@PersonRelated*/ ImageStore imageStore) {
+	public void destroyPersonImageStore(@Disposes @Named("personImageStore") /*@PersonRelated*/ ImageRepository imageStore) {
 		imageStore.destroy();
 	}
 	
