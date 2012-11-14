@@ -21,6 +21,7 @@ import net.sourceforge.cardme.vcard.VCard;
 import net.sourceforge.cardme.vcard.features.PhotoFeature;
 
 import org.apache.directory.ldap.client.api.LdapConnection;
+import org.apache.directory.shared.ldap.model.cursor.EntryCursor;
 import org.apache.directory.shared.ldap.model.entry.Attribute;
 import org.apache.directory.shared.ldap.model.entry.Entry;
 import org.apache.directory.shared.ldap.model.message.SearchScope;
@@ -29,7 +30,6 @@ import org.jboss.weld.environment.se.events.ContainerInitialized;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.soluvas.image.store.ImageRepository;
-import org.soluvas.ldap.LdapUtils;
 
 import akka.actor.ActorSystem;
 import akka.dispatch.Await;
@@ -41,6 +41,7 @@ import au.com.bytecode.opencsv.CSVWriter;
 
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.collect.Lists;
 
 /**
@@ -253,7 +254,18 @@ public class LdapCli {
 				log.info("Exporting LDAP entries to CSV: {}", exportFileName);
 				CSVWriter csv = new CSVWriter(new FileWriter(exportFileName));
 				try {
-					List<Entry> entries = LdapUtils.asList( ldap.search(ldapUsersDn, "(objectclass=person)", SearchScope.ONELEVEL) );
+					final Builder<Entry> entriesBuilder = ImmutableList.builder(); 
+					final EntryCursor cursor = ldap.search(ldapUsersDn, "(objectclass=person)", SearchScope.ONELEVEL);
+					try {
+						int i = 0;
+						for (Entry entry : cursor) {
+							log.debug("User #{}: {}", ++i, entry.getDn().getName());
+							entriesBuilder.add(entry);
+						}
+					} finally {
+						cursor.close();
+					}
+					final List<Entry> entries = entriesBuilder.build(); 
 					log.info("LDAP Search returned {} entries", entries.size());
 					// get the attribute names first
 					Set<String> attrNamesSet = new HashSet<String>();
@@ -303,5 +315,8 @@ public class LdapCli {
 				System.exit(0);
 			}
 		}, 50, TimeUnit.MILLISECONDS);
+	}
+	
+	public LdapCli() {
 	}
 }

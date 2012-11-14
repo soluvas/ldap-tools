@@ -20,7 +20,7 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.soluvas.slug.SlugUtils;
+import org.soluvas.commons.SlugUtils;
 
 import akka.actor.ActorSystem;
 import akka.dispatch.Future;
